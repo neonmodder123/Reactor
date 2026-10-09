@@ -154,7 +154,7 @@ public static class AssetBundleManager
     {
         if (TryFindFile(assembly, fileName, out var filePath))
         {
-            return AssetBundle.LoadFromFile(filePath);
+            return OperatingSystem.IsIOS() ? LoadFromFileOniOS(filePath) : LoadFromFileOnOtherPlatforms(filePath);
         }
 
         if (TryLoadResource(assembly, fileName, out var data))
@@ -188,6 +188,19 @@ public static class AssetBundleManager
         return TryLoadAsync(assembly, GetFileName(name, includeArchitecture: true))
                ?? TryLoadAsync(assembly, GetFileName(name, includeArchitecture: false))
                ?? throw new AssetBundleNotFoundException(name);
+    }
+
+    private static AssetBundle LoadFromFileOniOS(string filePath)
+    {
+        var bytes = File.ReadAllBytes(filePath);
+        var data = new Il2CppStructArray<byte>(bytes.Length);
+        bytes.AsSpan().CopyTo(data.ToSpan());
+        return AssetBundle.LoadFromMemory(data);
+    }
+
+    private static AssetBundle LoadFromFileOnOtherPlatforms(string filePath)
+    {
+        return AssetBundle.LoadFromFile(filePath);
     }
 
     private static AssetBundleCreateRequest? TryLoadAsync(Assembly assembly, string fileName)

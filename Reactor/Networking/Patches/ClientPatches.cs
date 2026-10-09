@@ -358,6 +358,12 @@ internal static class ClientPatches
 
         public static void Postfix(ref Il2CppStructArray<byte> __result)
         {
+            if (OperatingSystem.IsIOS() && __result == null)
+            {
+                Warning("Skipping modded handshake on iOS because GetConnectionData returned no handshake data");
+                return;
+            }
+
             var handshake = new MessageWriter(1000);
 
             handshake.Write(__result);
